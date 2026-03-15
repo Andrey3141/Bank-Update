@@ -1,5 +1,3 @@
-# README.md
-
 <div align="center">
   
 # 📖 StoryAuth v1.1.0
