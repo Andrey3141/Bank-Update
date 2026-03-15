@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StoryAuth - Безопасная аутентификация</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .step-icon {
+            width: 35px;
+            height: 35px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .step-title {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .input-group {
+            margin-bottom: 10px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin: 5px 0;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .log-box {
+            background: #1e1e2f;
+            color: #00ff88;
+            padding: 15px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            height: 300px;
+            overflow-y: auto;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        .log-entry {
+            margin: 3px 0;
+            padding: 3px;
+            border-left: 2px solid #00ff88;
+        }
+
+        .log-time {
+            color: #888;
+            margin-right: 8px;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-size: 13px;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-size: 13px;
+        }
+
+        .warning {
+            background: #fff3cd;
+            color: #856404;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-size: 13px;
+        }
+
+        .counter {
+            font-size: 36px;
+            font-weight: bold;
+            text-align: center;
+            color: #dc3545;
+        }
+
+        .question-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-size: 16px;
+            text-align: center;
+        }
+
+        .blocked {
+            background: #dc3545;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .card-number {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            color: #28a745;
+            padding: 10px;
+            background: #e8f5e9;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background: white;
+            margin: 15% auto;
+            padding: 20px;
+            border-radius: 15px;
+            width: 400px;
+            max-width: 90%;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 11px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        @media (max-width: 1024px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📖 StoryAuth - Безопасная аутентификация</h1>
+        
+        <!-- Модальное окно для ввода ответа -->
+        <div id="answerModal" class="modal">
+            <div class="modal-content">
+                <h3 id="modalTitle">Ответ на вопрос</h3>
+                <div id="modalQuestion" class="question-box"></div>
+                <input type="text" id="modalAnswer" placeholder="Ваш ответ" style="margin:10px 0;">
+                <input type="hidden" id="modalToken">
+                <input type="hidden" id="modalType">
+                <input type="hidden" id="modalUserId">
+                <div class="button-group">
+                    <button onclick="submitModalAnswer()" style="background:#28a745;">✅ Ответить</button>
+                    <button onclick="closeModal()" style="background:#dc3545;">❌ Отмена</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="grid">
+            <!-- Колонка 1: Регистрация и создание -->
+            <div>
+                <div class="card">
+                    <div class="card-header">
+                        <div class="step-icon">1</div>
+                        <div class="step-title">Регистрация</div>
+                    </div>
+                    <div class="input-group">
+                        <input type="text" id="newUserId" placeholder="ID клиента" value="test_user">
+                    </div>
+                    <div class="input-group">
+                        <input type="text" id="personalNames" placeholder="Имена (через запятую)" value="Маша, Петя">
+                    </div>
+                    <div class="input-group">
+                        <input type="text" id="cardNumber" placeholder="Номер карты (6 цифр)" maxlength="6">
+                    </div>
+                    <button onclick="registerUser()">📝 Создать историю</button>
+                    <div id="registerResult"></div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="step-icon">2</div>
+                        <div class="step-title">Сохранение истории (3 верных ответа)</div>
+                    </div>
+                    <div class="input-group">
+                        <input type="text" id="saveUserId" placeholder="ID клиента" value="test_user">
+                    </div>
+                    <div class="button-group">
+                        <button onclick="startSaveStory()">💾 Начать сохранение</button>
+                        <button onclick="cancelSave()" style="background:#dc3545;">❌ Отмена</button>
+                    </div>
+                    <div id="saveStatus"></div>
+                </div>
+            </div>
+
+            <!-- Колонка 2: Верификация и номер карты -->
+            <div>
+                <div class="card">
+                    <div class="card-header">
+                        <div class="step-icon">3</div>
+                        <div class="step-title">Верификация</div>
+                    </div>
+                    <div class="input-group">
+                        <input type="text" id="userId" placeholder="ID клиента" value="test_user">
+                    </div>
+                    <button onclick="getQuestion()">❓ Получить вопрос</button>
+                    <div id="questionDisplay" class="question-box"></div>
+                    
+                    <input type="hidden" id="sessionToken">
+                    <input type="hidden" id="currentCategory">
+                    <input type="hidden" id="currentUserId">
+                    
+                    <div class="input-group" style="margin-top:10px;">
+                        <input type="text" id="answerInput" placeholder="Ответ">
+                    </div>
+                    <button onclick="verifyAnswer()">✅ Проверить</button>
+                    <div id="resultArea"></div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="step-icon">4</div>
+                        <div class="step-title">Получить номер карты</div>
+                    </div>
+                    <div class="input-group">
+                        <input type="text" id="cardUserId" placeholder="ID клиента" value="test_user">
+                    </div>
+                    <button onclick="getCardNumber()">🎫 Получить номер</button>
+                    <div id="cardDisplay" class="card-number"></div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="step-icon">⚠️</div>
+                        <div class="step-title">Статус</div>
+                    </div>
+                    <div id="userStatus"></div>
+                    <div class="counter" id="counterDisplay">0</div>
+                </div>
+            </div>
+
+            <!-- Колонка 3: Управление и отладка -->
+            <div>
+                <div class="card">
+                    <div class="card-header">
+                        <div class="step-icon">5</div>
+                        <div class="step-title">Редактирование</div>
+                    </div>
+                    <div class="input-group">
+                        <select id="editElement">
+                            <option value="personag">👤 Кем был герой</option>
+                            <option value="imya_0">📝 Имя 1-го героя</option>
+                            <option value="imya_1">📝 Имя 2-го героя</option>
+                            <option value="deystvie">🏃 Что сделал</option>
+                            <option value="mesto">🗺️ Куда пошел</option>
+                            <option value="pomosh">🧙 Кого встретил</option>
+                            <option value="predmet">🎁 Что получил</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <input type="text" id="editValue" placeholder="Новое значение">
+                    </div>
+                    <div class="input-group">
+                        <input type="text" id="editUserId" placeholder="ID клиента" value="test_user">
+                    </div>
+                    <button onclick="editStory()">✏️ Применить</button>
+                    <div id="editResult"></div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="step-icon">6</div>
+                        <div class="step-title">Напоминание</div>
+                    </div>
+                    <div class="input-group">
+                        <input type="text" id="remindUserId" placeholder="ID клиента" value="test_user">
+                    </div>
+                    <button onclick="startReminder()">🔔 Начать напоминание</button>
+                    <div id="reminderStatus"></div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="step-icon">🔧</div>
+                        <div class="step-title">Отладка</div>
+                    </div>
+                    <div class="input-group">
+                        <input type="text" id="debugUserId" placeholder="ID клиента" value="test_user">
+                    </div>
+                    <div class="button-group">
+                        <button onclick="debugStory()">📊 Показать данные</button>
+                        <button onclick="clearDebug()" style="background:#6c757d;">🗑️ Очистить</button>
+                    </div>
+                    <div id="debugResult"></div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="step-icon">📋</div>
+                        <div class="step-title">Лог событий</div>
+                    </div>
+                    <div id="logBox" class="log-box"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let logBox = document.getElementById('logBox');
+        
+        function addToLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = '<span class="log-time">[' + timestamp + ']</span> ' + message;
+            logBox.appendChild(entry);
+            logBox.scrollTop = logBox.scrollHeight;
+        }
+
+        function showModal(title, question, token, type, userId) {
+            document.getElementById('modalTitle').innerHTML = title;
+            document.getElementById('modalQuestion').innerHTML = question;
+            document.getElementById('modalToken').value = token;
+            document.getElementById('modalType').value = type;
+            document.getElementById('modalUserId').value = userId;
+            document.getElementById('modalAnswer').value = '';
+            document.getElementById('answerModal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('answerModal').style.display = 'none';
+        }
+
+        function checkBlocked(userId, callback) {
+            fetch('/check-blocked/' + encodeURIComponent(userId))
+                .then(r => r.json())
+                .then(data => {
+                    if (data.blocked) {
+                        addToLog('⛔ Пользователь заблокирован: ' + data.reason, 'error');
+                        alert('Пользователь заблокирован: ' + data.reason);
+                        return false;
+                    }
+                    callback();
+                });
+        }
+
+        async function registerUser() {
+            const userId = document.getElementById('newUserId').value;
+            const namesStr = document.getElementById('personalNames').value;
+            const cardNumber = document.getElementById('cardNumber').value;
+            const personalNames = namesStr.split(',').map(s => s.trim()).filter(s => s);
+            
+            try {
+                const response = await fetch('/register', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        user_id: userId, 
+                        personal_names: personalNames,
+                        card_number: cardNumber
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.detail || 'Ошибка');
+                }
+                
+                addToLog('✅ Зарегистрирован: ' + userId, 'success');
+                document.getElementById('registerResult').innerHTML = 
+                    '<div class="success">📖 ' + data.story_text + '<br>🎫 Номер: ' + data.card_number + '</div>';
+                
+            } catch (error) {
+                addToLog('❌ ' + error.message, 'error');
+                document.getElementById('registerResult').innerHTML = 
+                    '<div class="error">❌ ' + error.message + '</div>';
+            }
+        }
+
+        async function startSaveStory() {
+            const userId = document.getElementById('saveUserId').value;
+            
+            const response = await fetch('/start-save/' + encodeURIComponent(userId));
+            const data = await response.json();
+            
+            if (data.error) {
+                alert(data.error);
+                return;
+            }
+            
+            document.getElementById('saveStatus').innerHTML = 
+                '<div class="warning">❓ Осталось вопросов: ' + data.remaining + '</div>';
+            
+            showModal('Сохранение истории', data.question, data.token, 'save', userId);
+        }
+
+        async function submitModalAnswer() {
+            const token = document.getElementById('modalToken').value;
+            const answer = document.getElementById('modalAnswer').value;
+            const type = document.getElementById('modalType').value;
+            const userId = document.getElementById('modalUserId').value;
+            
+            if (type === 'save') {
+                const response = await fetch('/submit-save-answer', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({token: token, answer: answer})
+                });
+                
+                const data = await response.json();
+                closeModal();
+                
+                if (data.completed) {
+                    document.getElementById('saveStatus').innerHTML = 
+                        '<div class="success">✅ История сохранена!</div>';
+                    addToLog('✅ История сохранена', 'success');
+                } else if (data.error) {
+                    document.getElementById('saveStatus').innerHTML = 
+                        '<div class="error">❌ ' + data.error + '</div>';
+                    addToLog('❌ Ошибка сохранения: ' + data.error, 'error');
+                } else {
+                    document.getElementById('saveStatus').innerHTML = 
+                        '<div class="warning">❓ Осталось вопросов: ' + data.remaining + '</div>';
+                    
+                    if (data.question) {
+                        showModal('Сохранение истории', data.question, data.new_token || token, 'save', userId);
+                    }
+                }
+            } else if (type === 'card') {
+                const response = await fetch('/verify-card-answer', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        user_id: userId,
+                        answer: answer,
+                        token: token
+                    })
+                });
+                
+                const data = await response.json();
+                closeModal();
+                
+                if (data.success) {
+                    document.getElementById('cardDisplay').innerHTML = '🎫 ' + data.card_number;
+                    addToLog('✅ Номер карты получен: ' + data.card_number, 'success');
+                } else {
+                    document.getElementById('cardDisplay').innerHTML = '⛔ ОШИБКА';
+                    addToLog('❌ Ошибка получения номера: ' + data.error, 'error');
+                }
+            } else if (type === 'reminder') {
+                const response = await fetch('/verify-reminder', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        user_id: userId,
+                        answer: answer,
+                        token: token
+                    })
+                });
+                
+                const data = await response.json();
+                closeModal();
+                
+                if (data.success) {
+                    document.getElementById('reminderStatus').innerHTML = 
+                        '<div class="success">✅ Напоминание успешно</div>';
+                    addToLog('✅ Напоминание успешно', 'success');
+                } else if (data.blocked) {
+                    document.getElementById('reminderStatus').innerHTML = 
+                        '<div class="error">⛔ ' + data.error + '</div>';
+                    addToLog('⛔ Пользователь заблокирован', 'error');
+                } else {
+                    document.getElementById('reminderStatus').innerHTML = 
+                        '<div class="warning">❌ Неверно. Осталось попыток: ' + data.remaining + '</div>';
+                    
+                    if (data.question) {
+                        showModal('Напоминание', data.question, data.new_token || token, 'reminder', userId);
+                    }
+                }
+            }
+        }
+
+        function cancelSave() {
+            document.getElementById('saveStatus').innerHTML = '';
+            addToLog('❌ Сохранение отменено', 'info');
+        }
+
+        async function getQuestion() {
+            const userId = document.getElementById('userId').value;
+            
+            const response = await fetch('/request-question?user_id=' + encodeURIComponent(userId));
+            const data = await response.json();
+            
+            if (data.error) {
+                alert(data.error);
+                return;
+            }
+            
+            document.getElementById('questionDisplay').innerHTML = data.question_text;
+            document.getElementById('sessionToken').value = data.session_token;
+            document.getElementById('currentCategory').value = data.category;
+            document.getElementById('currentUserId').value = userId;
+            
+            addToLog('❓ ' + data.question_text, 'question');
+        }
+
+        async function verifyAnswer() {
+            const answer = document.getElementById('answerInput').value;
+            const token = document.getElementById('sessionToken').value;
+            const userId = document.getElementById('currentUserId').value;
+            
+            const response = await fetch('/verify', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({answer_text: answer, session_token: token})
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                document.getElementById('resultArea').innerHTML = 
+                    '<div class="success">✅ GREEN - Верно</div>';
+                addToLog('✅ GREEN - Верно (ответ: ' + answer + ', правильный: ' + data.correct + ')', 'success');
+            } else {
+                document.getElementById('resultArea').innerHTML = 
+                    '<div class="error">❌ RED - Неверно</div>';
+                addToLog('❌ RED - Неверно (ответ: ' + answer + ', правильный: ' + data.correct + ')', 'error');
+            }
+            
+            updateCounter(userId);
+        }
+
+        async function getCardNumber() {
+            const userId = document.getElementById('cardUserId').value;
+            
+            const response = await fetch('/get-card-number/' + encodeURIComponent(userId));
+            const data = await response.json();
+            
+            if (data.error) {
+                document.getElementById('cardDisplay').innerHTML = '❌ ' + data.error;
+            } else {
+                document.getElementById('cardDisplay').innerHTML = '❓ Ожидание ответа';
+                showModal('Получение номера карты', data.question, data.token, 'card', userId);
+            }
+        }
+
+        async function startReminder() {
+            const userId = document.getElementById('remindUserId').value;
+            
+            const response = await fetch('/start-reminder/' + encodeURIComponent(userId));
+            const data = await response.json();
+            
+            if (data.error) {
+                document.getElementById('reminderStatus').innerHTML = 
+                    '<div class="error">❌ ' + data.error + '</div>';
+            } else {
+                document.getElementById('reminderStatus').innerHTML = 
+                    '<div class="warning">❓ Напоминание...</div>';
+                showModal('Напоминание', data.question, data.token, 'reminder', userId);
+            }
+        }
+
+        async function editStory() {
+            const userId = document.getElementById('editUserId').value;
+            const element = document.getElementById('editElement').value;
+            const value = document.getElementById('editValue').value;
+            
+            const response = await fetch('/edit-story', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({user_id: userId, element: element, new_value: value})
+            });
+            
+            const data = await response.json();
+            
+            if (data.error) {
+                document.getElementById('editResult').innerHTML = 
+                    '<div class="error">❌ ' + data.error + '</div>';
+            } else {
+                document.getElementById('editResult').innerHTML = 
+                    '<div class="success">📖 ' + data.story_text + '</div>';
+                addToLog('✏️ История изменена', 'info');
+            }
+        }
+
+        async function debugStory() {
+            const userId = document.getElementById('debugUserId').value;
+            
+            const response = await fetch('/debug/' + encodeURIComponent(userId));
+            const data = await response.json();
+            
+            if (data.error) {
+                document.getElementById('debugResult').innerHTML = 
+                    '<div class="error">❌ ' + data.error + '</div>';
+            } else {
+                document.getElementById('debugResult').innerHTML = 
+                    '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+            }
+        }
+
+        function clearDebug() {
+            document.getElementById('debugResult').innerHTML = '';
+        }
+
+        async function updateCounter(userId) {
+            const response = await fetch('/get-failed-count/' + encodeURIComponent(userId));
+            const data = await response.json();
+            document.getElementById('counterDisplay').innerHTML = data.count;
+            
+            const statusResponse = await fetch('/check-blocked/' + encodeURIComponent(userId));
+            const statusData = await statusResponse.json();
+            
+            if (statusData.blocked) {
+                document.getElementById('userStatus').innerHTML = 
+                    '<div class="blocked">⛔ ЗАБЛОКИРОВАН: ' + statusData.reason + '</div>';
+            } else {
+                document.getElementById('userStatus').innerHTML = '';
+            }
+        }
+    </script>
+</body>
+</html>
