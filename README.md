@@ -77,7 +77,7 @@
 
 ```bash
 # 1. Клонируйте репозиторий
-git clone https://github.com/yourusername/storyauth.git
+git clone https://github.com/Andrey3141/storyauth.git
 cd storyauth
 
 # 2. Создайте виртуальное окружение
